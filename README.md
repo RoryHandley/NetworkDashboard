@@ -70,6 +70,7 @@ You should see four containers: `network_flask_api`, `network_django_dashboard`,
 After starting containers, seed the database:
 ```bash
 docker exec -it network_mongodb mongosh devices --eval 'db.device_info.insertMany([{"id": 1, "name": "Router1", "ip_address": "192.168.1.1"}, {"id": 2, "name": "Switch1", "ip_address": "192.168.1.2"}, {"id": 3, "name": "Firewall1", "ip_address": "192.168.1.3"}])'
+```
 
 ## Usage
 
