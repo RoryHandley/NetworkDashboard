@@ -97,9 +97,8 @@ def get_device_info():
             # Return all documents in the device_info collection, suppressing _id
             device_info = list(db.device_info.find({}, {'_id': 0}).max_time_ms(3000))
 
-            # Try to cache it
-            # Maybe we could use flags instead to avoid trying redis if we know it's down
-            if redis_client:
+            # If we have info from the DB, try and cache it.
+            if redis_client and device_info:
                 try:
                     redis_client.setex('device_info', 300, json.dumps(device_info))
                     logger.info("Data stored in cache")
