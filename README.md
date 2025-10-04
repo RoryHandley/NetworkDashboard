@@ -48,7 +48,7 @@ The system consists of four containerized services working together:
 
 **Clone the repository:**
 ```bash
-git clone <repository-url>
+git clone https://github.com/RoryHandley/NetworkDashboard.git
 ```
 
 **Build and start all containers:**
