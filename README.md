@@ -51,6 +51,11 @@ The system consists of four containerized services working together:
 git clone https://github.com/RoryHandley/NetworkDashboard.git
 ```
 
+**Move to the root Directory**
+```bash
+cd NetworkDashboard
+```
+
 **Build and start all containers:**
 ```bash
 docker-compose up --build -d
