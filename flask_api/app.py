@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
+from pymongo.errors import ConnectionFailure, ExecutionTimeout
 import redis
 import json
 import logging
@@ -40,7 +40,7 @@ def connect_to_redis():
         Reference - https://github.com/redis/redis-py  
     """
     try:
-        redis_client = redis.Redis(host='redis', port=6379, decode_responses=True, socket_connect_timeout=3)
+        redis_client = redis.Redis(host='redis', port=6379, decode_responses=True)
         # Test connection
         redis_client.ping()
         logger.info("Redis connected successfully")
@@ -72,9 +72,6 @@ def get_device_info():
     # If Redis was available at startup 
     if redis_client:
         try:
-            # Confirm it is still available
-            redis_client.ping()
-
             # Check cache
             cached_info = redis_client.get('device_info')
 
@@ -87,28 +84,23 @@ def get_device_info():
             else: 
                 logger.info("DEVICE INFO CACHE MISS - Checking if Database is available")
         except Exception as e:
-            
+            # Redis has failed since app startup
             logger.error("Error accessing Redis - Trying database")
     
     # If Database was available at startup
     # Note we only hit here if either redis isn't available, or if it is available but doesn't have cached info
     if database_client:
         try: 
-            # Confirm it is still available
-            database_client.server_info()
-
             # Get Database instance for 'devices' database
             db = database_client.devices
 
             # Return all documents in the device_info collection, suppressing _id
-            device_info = list(db.device_info.find({}, {'_id': 0}))
+            device_info = list(db.device_info.find({}, {'_id': 0}).max_time_ms(3000))
 
             # Try to cache it
             # Maybe we could use flags instead to avoid trying redis if we know it's down
             if redis_client:
                 try:
-                    # Confirm it is still available
-                    redis_client.ping()
                     redis_client.setex('device_info', 300, json.dumps(device_info))
                     logger.info("Data stored in cache")
                 except:
@@ -119,14 +111,16 @@ def get_device_info():
             duration = round((end_time - start_time) * 1000, 2)
             logger.info(f"Device info fetched from MongoDB in {duration}ms")
             return device_info
+        except ExecutionTimeout:
+            logger.error("MongoDB query timedout after 3 seconds")
         except Exception as e:
-            logger.error("Error accessing MongoDB - returning fallback data")
-            # Return fallback data
-            return [
-                {"id": 1, "name": "Router1", "ip_address": "192.168.1.1"},
-                {"id": 2, "name": "Switch1", "ip_address": "192.168.1.2"}, 
-                {"id": 3, "name": "Firewall1", "ip_address": "192.168.1.3"}
-            ]
+            logger.error("Error accessing MongoDB")
+        
+        # Redis and database have failed
+        return None
+    
+    # Could not connect to redis or database on app startup
+    return None
 
 @app.route('/devices', methods=['GET'])
 def get_devices():
@@ -139,6 +133,7 @@ def get_devices():
         device['last_check'] = datetime.now().isoformat()
     
     return jsonify(device_info)
+        
 
 if __name__ == '__main__':
     # 0.0.0.0 so Container can listen to requests from external source
