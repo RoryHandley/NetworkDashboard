@@ -1,0 +1,199 @@
+# Network Device Status Monitoring System
+
+A full-stack network device monitoring application. This system demonstrates containerization, caching strategies, database integration, and real-time monitoring capabilities.
+
+## Project Overview
+
+This application monitors network devices and displays their status through a web dashboard. It simulates real-time device monitoring by checking device status (Up/Down) and provides a responsive interface that automatically refreshes to show current network health.
+
+## Architecture
+
+The system consists of four containerized services working together:
+
+**Flask API (Port 8000)**: Backend API that handles device data retrieval, implements caching strategies, and simulates real-time device status checks. It serves as the data layer, managing connections to MongoDB and Redis.
+
+**Django Dashboard (Port 8080)**: Frontend web application that queries the Flask API and renders device status information in a user-friendly Bootstrap-based interface with automatic refresh capabilities.
+
+**MongoDB (Port 27017)**: Document database storing static device information including device names, IP addresses, locations, and device types. This data changes infrequently and is cached for performance.
+
+**Redis (Port 6379)**: In-memory cache that stores device information to reduce database load and improve response times. Implements a smart caching strategy with appropriate TTL settings.
+
+## Key Features
+
+**Smart Caching Strategy**: Device information is cached in Redis for 5 minutes since it rarely changes, while device status is checked in real-time to ensure accurate monitoring data.
+
+**Fallback Data Handling**: The system gracefully handles failures at any layer, providing fallback data when MongoDB or Redis are unavailable to ensure continuous operation.
+
+**Real-Time Monitoring**: The dashboard auto-refreshes every 5 seconds to display current device status, simulating a network operations center (NOC) display.
+
+**Containerized Architecture**: All services run in Docker containers with proper service dependencies and inter-container communication configured.
+
+**Comprehensive Testing**: Includes both unit tests (isolated function testing with mocked dependencies) and integration tests (full system testing with all services running).
+
+## Technology Stack
+
+**Backend**: Python 3.11, Flask, PyMongo, Redis-py
+**Frontend**: Django, Bootstrap 5, Jinja2 templating
+**Databases**: MongoDB 7.0, Redis 7.0
+**Containerization**: Docker, Docker Compose
+**Testing**: pytest, pytest-flask
+
+## Prerequisites
+
+- Docker Desktop installed and running
+- Docker Compose (included with Docker Desktop)
+- Git (for cloning the repository)
+
+## Installation and Setup
+
+**Clone the repository:**
+```bash
+git clone <repository-url>
+cd web_app
+```
+
+**Build and start all containers:**
+```bash
+docker-compose up --build -d
+```
+
+This command will build the Flask and Django images, pull the MongoDB and Redis images, and start all services with proper networking configured.
+
+**Verify all containers are running:**
+```bash
+docker ps
+```
+
+You should see four containers: `network_flask_api`, `network_django_dashboard`, `network_mongodb`, and `network_redis`.
+
+**Initialize the database with sample data:**
+Access the database container and insert records with below:
+```bash
+db.device_info.insertMany([
+  {"id": 1, "name": "Router1", "ip_address": "192.168.1.1"},
+  {"id": 2, "name": "Switch1", "ip_address": "192.168.1.2"},
+  {"id": 3, "name": "Firewall1", "ip_address": "192.168.1.3"}
+])
+```
+
+## Usage
+
+**Access the web dashboard:**
+Open your browser and navigate to `http://localhost:8080`
+
+The dashboard displays:
+- Overall network health status (All Devices Online or specific device errors)
+- Detailed device table showing ID, name, IP address, current status, and last check time
+- Color-coded status badges (green for Up, red for Down)
+- Automatic refresh every 5 seconds
+
+
+## Testing
+
+The project includes testing on the flask API with both unit and integration tests.
+
+**Run all tests:**
+```bash
+cd flask_api
+python -m pytest tests/ -v
+```
+
+**Run only unit tests:**
+```bash
+python -m pytest tests/test_unit.py -v
+```
+
+**Run only integration tests:**
+```bash
+python -m pytest tests/test_integration.py -v
+```
+
+**Test coverage includes:**
+- Unit tests for device status checking functions (with mocked network calls)
+- Integration tests for API endpoints with all services running
+- Fault tolerance tests (Redis down, MongoDB down, both down scenarios)
+- Data validation and required field verification
+
+## Project Structure
+
+```
+web_app/
+├── docker-compose.yml          # Orchestrates all four services
+├── venv                        # Virtual Python environment
+├── flask_api/
+│   ├── Dockerfile             # Flask API container definition
+│   ├── app.py                 # Main Flask application
+|   ├── requirements.txt       # Dependencies for Flask container
+│   └── tests/
+│       ├── test_unit.py       # Unit tests with mocked dependencies
+│       └── test_integration.py # Integration tests with live services
+├── django_dashboard/
+│   ├── Dockerfile             # Django container definition
+│   ├── manage.py              # Django management script
+│   ├── django_dashboard/      # Django project settings
+|   ├── requirements.txt       # Dependencies for Django container
+│   └── dashboard/
+│       ├── views.py           # View logic for device dashboard
+│       ├── urls.py            # URL routing
+│       └── templates/
+│           └── dashboard.html # Bootstrap-based UI template
+|       └── static/
+│           └── network.ico    # webpage favicon
+└── README.md                  # This file
+```
+
+
+## Docker Configuration
+
+**Service Dependencies:**
+- Django dashboard depends on Flask API
+- Flask API depends on both MongoDB and Redis
+- MongoDB and Redis are independent base services
+
+**Port Mappings:**
+- Flask API: 8000:8000
+- Django Dashboard: 8080:8080
+- MongoDB: 27017:27017
+- Redis: 6379:6379
+
+**Networking:**
+Containers communicate using Docker's internal DNS. Services reference each other by service name (e.g., Flask connects to MongoDB at `mongodb://mongodb:27017/` rather than localhost).
+
+## Caching Strategy
+
+The application implements an intelligent caching approach that balances performance with data freshness:
+
+**Device Information (5-minute cache)**: Static data like device names, IP addresses, and locations are cached in Redis because they rarely change. This reduces database load significantly.
+
+**Device Status (real-time)**: Current Up/Down status is checked on every request by simulating network monitoring (ping/SNMP-like behavior). This ensures operators always see current network health.
+
+**Cache Flow:**
+1. Request comes to Flask API
+2. Check Redis for device info (if hit, serve in ~2ms)
+3. On cache miss, query MongoDB (~15-50ms)
+4. Cache the result in Redis with 300-second TTL
+5. Check live device status for each device
+6. Return merged data (cached info + live status)
+
+## Troubleshooting
+
+**Containers won't start:**
+Ensure Docker Desktop is running and you have sufficient resources allocated in Docker Desktop settings.
+
+**Empty reply from server:**
+Verify the Flask app is binding to `0.0.0.0` (not `127.0.0.1`) in the `app.run()` command.
+
+**Connection refused between containers:**
+Check that you're using service names (mongodb, redis, flask_api) rather than localhost when containers communicate with each other.
+
+**Tests failing:**
+Ensure all Docker containers are running before executing integration tests, as they require live database and cache connections.
+
+**Clear Redis cache manually:**
+```bash
+redis-cli -h localhost -p 6379 del device_info
+```
+
+## Author
+
+Rory Handley 

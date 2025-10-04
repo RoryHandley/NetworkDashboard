@@ -1,0 +1,12 @@
+Django==4.2.25
+django-bootstrap-v5==1.0.11
+requests==2.32.5
+asgiref==3.9.2
+beautifulsoup4==4.14.2
+certifi==2025.8.3
+charset-normalizer==3.4.3
+idna==3.10
+Pygments==2.19.2
+soupsieve==2.8
+sqlparse==0.5.3
+urllib3==2.5.0

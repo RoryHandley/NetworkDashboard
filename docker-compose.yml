@@ -1,0 +1,40 @@
+services:
+  flask_api:
+    build:
+      context: .
+      dockerfile: flask_api/Dockerfile
+    container_name: network_flask_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+      - redis
+
+  django_dashboard:
+    build:
+      context: .
+      dockerfile: django_dashboard/Dockerfile
+    container_name: network_django_dashboard
+    ports:
+      - "8080:8080"
+    depends_on:
+      - flask_api
+
+  mongodb:
+    image: mongo:7.0
+    container_name: network_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: devices
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7.0
+    container_name: network_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongodb_data:
