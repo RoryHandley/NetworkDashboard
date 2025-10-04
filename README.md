@@ -49,7 +49,6 @@ The system consists of four containerized services working together:
 **Clone the repository:**
 ```bash
 git clone <repository-url>
-cd web_app
 ```
 
 **Build and start all containers:**
@@ -149,26 +148,6 @@ web_app/
 **Networking:**
 Containers communicate using Docker's internal DNS. Services reference each other by service name (e.g., Flask connects to MongoDB at `mongodb://mongodb:27017/` rather than localhost).
 
-
-## Troubleshooting
-
-**Containers won't start:**
-Ensure Docker Desktop is running and you have sufficient resources allocated in Docker Desktop settings.
-
-**Empty reply from server:**
-Verify the Flask app is binding to `0.0.0.0` (not `127.0.0.1`) in the `app.run()` command.
-
-**Connection refused between containers:**
-Check that you're using service names (mongodb, redis, flask_api) rather than localhost when containers communicate with each other.
-
-**Tests failing:**
-Ensure all Docker containers are running before executing integration tests, as they require live database and cache connections.
-
-**Clear Redis cache manually:**
-```bash
-redis-cli -h localhost -p 6379 del device_info
-```
-
 ## Known Platform Differences
 
 **Windows/WSL2 Performance Note:**
@@ -179,7 +158,6 @@ If running on Windows with Docker Desktop (which uses WSL2), you may experience 
 - On macOS/Linux: Failed Redis/MongoDB connections timeout in ~1-3 seconds
 - On Windows/WSL2: Failed connections may take 8-16 seconds to timeout
 
-**This is a known Docker Desktop on Windows limitation, not an application bug.** The application logic and timeout configurations are identical across platforms - the difference lies in how WSL2 handles network socket timeouts at the OS level.
 
 **Workarounds for Windows users:**
 - Ensure Redis and MongoDB containers remain running during testing
