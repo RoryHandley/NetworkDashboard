@@ -108,8 +108,8 @@ python -m pytest tests/test_integration.py -v
 
 ```
 web_app/
-├── docker-compose.yml          # Orchestrates all four services
-├── venv                        # Virtual Python environment
+├── docker-compose.yml         # Orchestrates all four services
+├── init-mongo.js              # MongoDB initialization script with seed data
 ├── flask_api/
 │   ├── Dockerfile             # Flask API container definition
 │   ├── app.py                 # Main Flask application
@@ -149,21 +149,6 @@ web_app/
 **Networking:**
 Containers communicate using Docker's internal DNS. Services reference each other by service name (e.g., Flask connects to MongoDB at `mongodb://mongodb:27017/` rather than localhost).
 
-## Caching Strategy
-
-The application implements an intelligent caching approach that balances performance with data freshness:
-
-**Device Information (5-minute cache)**: Static data like device names, IP addresses, and locations are cached in Redis because they rarely change. This reduces database load significantly.
-
-**Device Status (real-time)**: Current Up/Down status is checked on every request by simulating network monitoring (ping/SNMP-like behavior). This ensures operators always see current network health.
-
-**Cache Flow:**
-1. Request comes to Flask API
-2. Check Redis for device info (if hit, serve in ~2ms)
-3. On cache miss, query MongoDB (~15-50ms)
-4. Cache the result in Redis with 300-second TTL
-5. Check live device status for each device
-6. Return merged data (cached info + live status)
 
 ## Troubleshooting
 
@@ -183,6 +168,25 @@ Ensure all Docker containers are running before executing integration tests, as 
 ```bash
 redis-cli -h localhost -p 6379 del device_info
 ```
+
+## Known Platform Differences
+
+**Windows/WSL2 Performance Note:**
+
+If running on Windows with Docker Desktop (which uses WSL2), you may experience slower response times when Redis or MongoDB become unavailable compared to running on macOS or Linux. This is due to WSL2's networking translation layer, which has longer default TCP timeout values for failed connections.
+
+**Symptoms:**
+- On macOS/Linux: Failed Redis/MongoDB connections timeout in ~1-3 seconds
+- On Windows/WSL2: Failed connections may take 8-16 seconds to timeout
+
+**This is a known Docker Desktop on Windows limitation, not an application bug.** The application logic and timeout configurations are identical across platforms - the difference lies in how WSL2 handles network socket timeouts at the OS level.
+
+**Workarounds for Windows users:**
+- Ensure Redis and MongoDB containers remain running during testing
+- Allocate more resources to Docker Desktop (Settings → Resources)
+- Consider testing on a Linux VM for production-representative performance
+
+The assessment was developed and tested primarily on macOS where container networking performs optimally.
 
 ## Author
 
