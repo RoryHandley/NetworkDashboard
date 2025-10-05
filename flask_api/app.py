@@ -116,16 +116,19 @@ def get_device_info():
             logger.error("Error accessing MongoDB")
         
         # Redis and database have failed
-        return None
+        return []
     
     # Could not connect to redis or database on app startup
-    return None
+    return []
 
 @app.route('/devices', methods=['GET'])
 def get_devices():
     # Get device info from cache/database/fallback
     device_info = get_device_info() 
     
+    if not device_info: 
+        return jsonify([]), 200
+
     # Get live status by "monitoring" each device
     for device in device_info:
         device['status'] = check_device_status(device['ip_address'])
