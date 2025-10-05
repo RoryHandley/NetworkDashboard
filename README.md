@@ -75,6 +75,14 @@ The dashboard displays:
 
 The project includes testing on the flask API with both unit and integration tests.
 
+
+**Virtual Python Environment (Recommended)**
+Create and active your virtual Python environment using below commands:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
 **Install test dependencies:**
 ```bash
 pip install -r requirements-dev.txt
