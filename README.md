@@ -18,25 +18,7 @@ The system consists of four containerized services working together:
 
 **Redis (Port 6379)**: In-memory cache that stores device information to reduce database load and improve response times. Implements a smart caching strategy with appropriate TTL settings.
 
-## Key Features
 
-**Smart Caching Strategy**: Device information is cached in Redis for 5 minutes since it rarely changes, while device status is checked in real-time to ensure accurate monitoring data.
-
-**Fallback Data Handling**: The system gracefully handles failures at any layer, providing fallback data when MongoDB or Redis are unavailable to ensure continuous operation.
-
-**Real-Time Monitoring**: The dashboard auto-refreshes every 5 seconds to display current device status, simulating a network operations center (NOC) display.
-
-**Containerized Architecture**: All services run in Docker containers with proper service dependencies and inter-container communication configured.
-
-**Comprehensive Testing**: Includes both unit tests (isolated function testing with mocked dependencies) and integration tests (full system testing with all services running).
-
-## Technology Stack
-
-**Backend**: Python 3.11, Flask, PyMongo, Redis-py
-**Frontend**: Django, Bootstrap 5, Jinja2 templating
-**Databases**: MongoDB 7.0, Redis 7.0
-**Containerization**: Docker, Docker Compose
-**Testing**: pytest, pytest-flask
 
 ## Prerequisites
 
@@ -92,6 +74,11 @@ The dashboard displays:
 ## Testing
 
 The project includes testing on the flask API with both unit and integration tests.
+
+**Install test dependencies:**
+```bash
+pip install -r requirements-dev.txt
+```
 
 **Run all tests:**
 ```bash
