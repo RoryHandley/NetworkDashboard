@@ -107,7 +107,7 @@ python -m pytest tests/test_integration.py -v
 ```
 web_app/
 ├── docker-compose.yml         # Orchestrates all four services
-├── init-mongo.js              # MongoDB initialization script with seed data
+├── requirements-dev.txt       # Dependencies for testing
 ├── flask_api/
 │   ├── Dockerfile             # Flask API container definition
 │   ├── app.py                 # Main Flask application
